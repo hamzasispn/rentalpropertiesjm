@@ -1,9 +1,7 @@
-<div
-    class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:-translate-y-1"
+<div class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:-translate-y-1"
     :class="{ 'flex items-center': viewType === 'list' }">
     <!-- Image Container -->
-    <div class="relative h-[264px]  bg-slate-200 overflow-hidden group"
-    :class="{ 'w-[30%]': viewType === 'list' }">
+    <div class="relative h-[264px]  bg-slate-200 overflow-hidden group" :class="{ 'w-[30%]': viewType === 'list' }">
 
 
         <div x-data="{
@@ -44,20 +42,32 @@
             Super Hot
         </div>
 
+        <div
+            class="absolute top-4 left-4 bg-black/80 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg flex gap-1 items-center font-inter">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 6C6.916 6 6 6.916 6 8C6 9.084 6.916 10 8 10C9.084 10 10 9.084 10 8C10 6.916 9.084 6 8 6Z"
+                    fill="white" />
+                <path
+                    d="M13.334 3.33337H11.61L9.80532 1.52871C9.68032 1.40367 9.51078 1.33341 9.33398 1.33337H6.66732C6.49052 1.33341 6.32098 1.40367 6.19598 1.52871L4.39132 3.33337H2.66732C1.93198 3.33337 1.33398 3.93137 1.33398 4.66671V12C1.33398 12.7354 1.93198 13.3334 2.66732 13.3334H13.334C14.0693 13.3334 14.6673 12.7354 14.6673 12V4.66671C14.6673 3.93137 14.0693 3.33337 13.334 3.33337ZM8.00065 11.3334C6.19398 11.3334 4.66732 9.80671 4.66732 8.00004C4.66732 6.19337 6.19398 4.66671 8.00065 4.66671C9.80732 4.66671 11.334 6.19337 11.334 8.00004C11.334 9.80671 9.80732 11.3334 8.00065 11.3334Z"
+                    fill="white" />
+            </svg>
+            <span x-text="images.length"></span>
+        </div>
+
         <!-- Agent Profile Link -->
         <a :href="property.author_profile_url"
             class="absolute bottom-4 left-4 bg-[var(--secondary-color)] flex gap-4 items-center  border border-solid border-[var(--primary-color)] rounded-lg w-fit p-2 shadow-md hover:shadow-lg transition-all duration-300">
             <img :src="property.author_avatar" :alt="property.author_name" class="w-10 h-10 rounded-full object-cover">
             <div>
-                <h4 class="text-[var(--primary-color)] font-semibold text-md font-inter" x-text="property.author_name"></h4>
+                <h4 class="text-[var(--primary-color)] font-semibold text-md font-inter" x-text="property.author_name">
+                </h4>
                 <span class="text-xs font-inter">Estate Agent</span>
             </div>
         </a>
     </div>
 
     <!-- Content -->
-    <div class="px-[27px] pt-[12px] pb-[24px]"
-    :class="{ 'w-[70%]': viewType === 'list' }">
+    <div class="px-[27px] pt-[12px] pb-[24px]" :class="{ 'w-[70%]': viewType === 'list' }">
         <div class="flex justify-between items-start">
             <h3
                 class="text-[26px] font-medium text-slate-900 mb-2 line-clamp-2 hover:text-[var(--primary-color)] transition w-[70%]">
@@ -122,7 +132,9 @@
             </div>
         </div>
         <div x-show="!loading && viewType === 'list'" class="flex justify-end">
-            <a :href="property.link" class="block mt-4 bg-[var(--primary-color)] text-white font-inter font-medium hover:text-blue-800 px-4 py-2 rounded-lg">View Details</a>
+            <a :href="property.link"
+                class="block mt-4 bg-[var(--primary-color)] text-white font-inter font-medium hover:text-blue-800 px-4 py-2 rounded-lg">View
+                Details</a>
         </div>
     </div>
 </div>
