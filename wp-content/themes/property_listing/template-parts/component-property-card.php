@@ -42,8 +42,8 @@
             Super Hot
         </div>
 
-        <div
-            class="absolute top-4 left-4 bg-black/80 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-lg flex gap-1 items-center font-inter">
+        <div x-show="property.gallery.length > 1"
+            class="absolute top-4 left-4 bg-black/50 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg flex gap-2 items-center font-inter">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M8 6C6.916 6 6 6.916 6 8C6 9.084 6.916 10 8 10C9.084 10 10 9.084 10 8C10 6.916 9.084 6 8 6Z"
                     fill="white" />
@@ -51,7 +51,7 @@
                     d="M13.334 3.33337H11.61L9.80532 1.52871C9.68032 1.40367 9.51078 1.33341 9.33398 1.33337H6.66732C6.49052 1.33341 6.32098 1.40367 6.19598 1.52871L4.39132 3.33337H2.66732C1.93198 3.33337 1.33398 3.93137 1.33398 4.66671V12C1.33398 12.7354 1.93198 13.3334 2.66732 13.3334H13.334C14.0693 13.3334 14.6673 12.7354 14.6673 12V4.66671C14.6673 3.93137 14.0693 3.33337 13.334 3.33337ZM8.00065 11.3334C6.19398 11.3334 4.66732 9.80671 4.66732 8.00004C4.66732 6.19337 6.19398 4.66671 8.00065 4.66671C9.80732 4.66671 11.334 6.19337 11.334 8.00004C11.334 9.80671 9.80732 11.3334 8.00065 11.3334Z"
                     fill="white" />
             </svg>
-            <span x-text="images.length"></span>
+            <span x-text="property.gallery.length" class="font-inter text-xs"></span>
         </div>
 
         <!-- Agent Profile Link -->
