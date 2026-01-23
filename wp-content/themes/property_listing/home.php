@@ -9,43 +9,34 @@ get_header();
 <div class="min-h-screen bg-slate-50 mt-20">
 
     <!-- Properties Grid -->
-    <div class="max-w-[1520px] mx-auto px-4 py-16">
+    <div class="max-w-[90%] mx-auto px-4 py-16">
         <div x-data="propertyList()" x-init="loadProperties()">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" x-show="!loading">
+            <h2 class="text-[#1A1A1A] text-[2.5vw] font-bold mb-6">Featured Listed Properties</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px]" x-show="!loading">
                 <template x-for="property in properties" :key="property.id">
-                    <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow overflow-hidden">
-                        <div class="relative h-48 bg-slate-200">
-                            <img :src="property.image || '/placeholder.svg?height=300&width=400'" :alt="property.title"
-                                class="w-full h-full object-cover">
-                            <div x-show="property.featured"
-                                class="absolute top-4 right-4 bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                                Featured</div>
-                        </div>
-                        <div class="p-6">
-                            <h3 class="text-xl font-semibold text-slate-900 mb-2">
-                                <a :href="property.permalink" class="hover:text-blue-600 transition-colors"
-                                    x-text="property.title"></a>
-                            </h3>
-                            <p class="text-slate-600 text-sm mb-4" x-text="property.address"></p>
-                            <div class="flex justify-between items-center mb-4">
-                                <span class="text-2xl font-bold text-blue-600"
-                                    x-text="'$' + property.price.toLocaleString()"></span>
-                            </div>
-                            <div class="flex gap-4 text-sm text-slate-600 mb-6">
-                                <span><strong x-text="property.bedrooms"></strong> Beds</span>
-                                <span><strong x-text="property.bathrooms"></strong> Baths</span>
-                                <span><strong x-text="property.area"></strong> sqft</span>
-                            </div>
-                            <a :href="property.permalink"
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-center">View
-                                Details</a>
-                        </div>
+                    <div>
+                        <?php get_template_part('template-parts/component', 'property-card'); ?>
                     </div>
                 </template>
             </div>
 
-            <div x-show="loading" class="flex justify-center items-center py-12">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <!-- Skeleton Cards Loading State - Dynamic placeholder instead of spinner -->
+            <div x-show="loading" class="space-y-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px]">
+                <template x-for="i in [1,2,3,4,5,6]" :key="i">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-pulse">
+                        <div class="h-56 bg-gradient-to-r from-slate-200 to-slate-100"></div>
+                        <div class="p-6">
+                            <div class="h-6 bg-slate-200 rounded w-3/4 mb-4"></div>
+                            <div class="h-4 bg-slate-200 rounded w-full mb-3"></div>
+                            <div class="h-4 bg-slate-200 rounded w-2/3 mb-6"></div>
+                            <div class="flex gap-2 mb-4">
+                                <div class="h-8 bg-slate-200 rounded-full w-20"></div>
+                                <div class="h-8 bg-slate-200 rounded-full w-20"></div>
+                            </div>
+                            <div class="h-10 bg-slate-200 rounded w-full"></div>
+                        </div>
+                    </div>
+                </template>
             </div>
 
 
@@ -351,14 +342,14 @@ get_header();
         </div>
     </div>
 
-  <script>
+    <script>
         function propertyList() {
             return {
                 properties: [],
                 loading: true,
                 async loadProperties() {
                     try {
-                        const response = await fetch(propertyTheme.rest_url + 'property-theme/v1/properties/search?featured=true&per_page=6', {
+                        const response = await fetch('<?php echo get_home_url(); ?>/wp-json/property/v1/search?featured=true&per_page=6', {
                             headers: {
                                 'X-WP-Nonce': propertyTheme.nonce,
                             }
