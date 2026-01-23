@@ -1,5 +1,5 @@
-<div class="bg-white rounded-xl shadow-sm hover:shadow-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:-translate-y-1"
-    :class="{ 'flex items-center': viewType === 'list' }">
+<div class="bg-white rounded-xl flex flex-col shadow-sm hover:shadow-xl border border-slate-200 overflow-hidden transition-all duration-300 hover:-translate-y-1 h-full"
+    :class="{ 'flex-row items-center': viewType === 'list' }">
     <!-- Image Container -->
     <div class="relative h-[264px]  bg-slate-200 overflow-hidden group" :class="{ 'w-[30%]': viewType === 'list' }">
 
@@ -67,27 +67,30 @@
     </div>
 
     <!-- Content -->
-    <div class="px-[27px] pt-[12px] pb-[24px]" :class="{ 'w-[70%]': viewType === 'list' }">
-        <div class="flex justify-between items-start">
-            <h3
-                class="text-[26px] font-medium text-slate-900 mb-2 line-clamp-2 hover:text-[var(--primary-color)] transition w-[70%]">
-                <a :href="property.permalink" x-text="property.title"></a>
-            </h3>
-            <p class="text-[20px] font-medium font-inter w-[25%] text-right"
-                x-text="`$ ${property.price.toLocaleString()}`"></p>
-        </div>
-        <div class="flex gap-2 items-center mb-[12px]" x-show="property.address">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M9.66732 6.00004C9.66732 6.44207 9.49172 6.86599 9.17916 7.17855C8.8666 7.49111 8.44268 7.66671 8.00065 7.66671C7.55862 7.66671 7.1347 7.49111 6.82214 7.17855C6.50958 6.86599 6.33398 6.44207 6.33398 6.00004C6.33398 5.55801 6.50958 5.13409 6.82214 4.82153C7.1347 4.50897 7.55862 4.33337 8.00065 4.33337C8.44268 4.33337 8.8666 4.50897 9.17916 4.82153C9.49172 5.13409 9.66732 5.55801 9.66732 6.00004Z"
-                    stroke="#132364" />
-                <path
-                    d="M8.83897 11.6627C8.61379 11.8794 8.31345 12.0004 8.00097 12.0004C7.68849 12.0004 7.38815 11.8794 7.16297 11.6627C5.10364 9.66737 2.3443 7.43871 3.68964 4.20271C4.4183 2.45271 6.16497 1.33337 8.00097 1.33337C9.83697 1.33337 11.5843 2.45337 12.3123 4.20271C13.6563 7.43404 10.9036 9.67404 8.83897 11.6627Z"
-                    stroke="#132364" />
-                <path d="M12 13.3334C12 14.07 10.2093 14.6667 8 14.6667C5.79067 14.6667 4 14.07 4 13.3334"
-                    stroke="#132364" stroke-linecap="round" />
-            </svg>
-            <p class="text-[var(--primary-color)] text-[14px] line-clamp-1 font-inter" x-text="property.address"></p>
+    <div class="px-[27px] pt-[12px] pb-[24px] grow flex flex-col justify-between">
+        <div>
+            <div class="flex justify-between items-start mb-[14px]">
+                <h3
+                    class="text-[1.389vw] font-medium leading-[1em] text-slate-900 mb-2 line-clamp-2 hover:text-[var(--primary-color)] transition w-[70%]">
+                    <a :href="property.permalink" x-text="property.title"></a>
+                </h3>
+                <p class="text-[20px] font-medium font-inter w-[25%] text-right"
+                    x-text="`$ ${property.price.toLocaleString()}`"></p>
+            </div>
+            <div class="flex gap-2 items-center mb-[14px]" x-show="property.address">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M9.66732 6.00004C9.66732 6.44207 9.49172 6.86599 9.17916 7.17855C8.8666 7.49111 8.44268 7.66671 8.00065 7.66671C7.55862 7.66671 7.1347 7.49111 6.82214 7.17855C6.50958 6.86599 6.33398 6.44207 6.33398 6.00004C6.33398 5.55801 6.50958 5.13409 6.82214 4.82153C7.1347 4.50897 7.55862 4.33337 8.00065 4.33337C8.44268 4.33337 8.8666 4.50897 9.17916 4.82153C9.49172 5.13409 9.66732 5.55801 9.66732 6.00004Z"
+                        stroke="#132364" />
+                    <path
+                        d="M8.83897 11.6627C8.61379 11.8794 8.31345 12.0004 8.00097 12.0004C7.68849 12.0004 7.38815 11.8794 7.16297 11.6627C5.10364 9.66737 2.3443 7.43871 3.68964 4.20271C4.4183 2.45271 6.16497 1.33337 8.00097 1.33337C9.83697 1.33337 11.5843 2.45337 12.3123 4.20271C13.6563 7.43404 10.9036 9.67404 8.83897 11.6627Z"
+                        stroke="#132364" />
+                    <path d="M12 13.3334C12 14.07 10.2093 14.6667 8 14.6667C5.79067 14.6667 4 14.07 4 13.3334"
+                        stroke="#132364" stroke-linecap="round" />
+                </svg>
+                <p class="text-[var(--primary-color)] text-[14px] line-clamp-1 font-inter" x-text="property.address">
+                </p>
+            </div>
         </div>
 
         <!-- Details -->
