@@ -19,6 +19,10 @@ img {
     font-family: var(--secondary-font);
 }
 
+[x-cloak] {
+    display: none !important;
+}
+
 @layer components {
 
     .menu-main-menu-container {
@@ -79,7 +83,7 @@ img {
 
     .noUi-handle::before,
     .noUi-handle::after {
-        @apply  text-white !hidden;
+        @apply text-white !hidden;
     }
 
     .noUi-target {
@@ -90,4 +94,32 @@ img {
         @apply bg-white !bg-gradient-to-br from-[#132364] to-[#2647CA];
     }
 
+    .ts-control {
+        @apply p-0 !border-none;
+    }
+
+    .ts-control>*,
+    .ts-dropdown.single .option {
+        @apply font-inter;
+    }
+
+    @keyframes marquee {
+        0% {
+            transform: translateX(0%);
+        }
+
+        100% {
+            transform: translateX(-100%);
+        }
+    }
+
+    .animate-marquee {
+        animation: marquee 15s linear infinite;
+    }
+
+    .icon{
+        svg{
+            @apply md:w-[1.667vw] md:h-[1.667vw] w-[7.529vw] h-[7.529vw];
+        }
+    }
 }

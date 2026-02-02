@@ -1,18 +1,18 @@
-import './main.scss';
-import Alpine from 'alpinejs';
-import axios from 'axios';
-import Swiper from 'swiper';
-import 'swiper/swiper-bundle.css';
-import './property-filter-manager.js';
+import './main.scss'
+import Alpine from 'alpinejs'
+import axios from 'axios'
 
+// ✅ Swiper core ONLY
+import Swiper from 'swiper'
+import 'swiper/css'
+import 'swiper/css/grid'
+import 'swiper/css/thumbs'
 
-window.Alpine = Alpine;
-Alpine.start();
+import './property-filter-manager.js'
 
-window.axios = axios;
-window.Swiper = Swiper;
-window.mapboxgl = mapboxgl;
-window.MapboxGeocoder = MapboxGeocoder;
+// ✅ Globals
+window.Swiper = Swiper
+window.axios = axios
 
 window.wpData = {
     ajaxUrl: window.propertyTheme?.ajax_url || '',
@@ -20,8 +20,12 @@ window.wpData = {
     homeUrl: window.propertyTheme?.home_url || '',
     restUrl: window.propertyTheme?.rest_url || '',
     mapboxKey: window.propertyTheme?.mapbox_key || '',
-};
+}
 
-// Auto-config for Axios
-axios.defaults.headers.common['X-WP-Nonce'] = wpData.nonce;
-axios.defaults.withCredentials = true;
+// Axios
+axios.defaults.headers.common['X-WP-Nonce'] = wpData.nonce
+axios.defaults.withCredentials = true
+
+// ✅ Alpine LAST
+window.Alpine = Alpine
+Alpine.start()

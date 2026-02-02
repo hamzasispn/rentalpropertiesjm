@@ -110,11 +110,25 @@ function property_search_api(WP_REST_Request $request)
     }
 
     // Featured
-    if ($filters['featured']) {
+    $featured_param = $request->get_param('featured');
+    if ($featured_param === 'true') {
         $args['meta_query'][] = array(
             'key' => '_property_featured',
-            'value' => 1,
+            'value' => '1',
             'compare' => '=',
+        );
+    } elseif ($featured_param === 'false') {
+        $args['meta_query'][] = array(
+            'relation' => 'OR',
+            array(
+                'key' => '_property_featured',
+                'value' => '1',
+                'compare' => '!=',
+            ),
+            array(
+                'key' => '_property_featured',
+                'compare' => 'NOT EXISTS',
+            ),
         );
     }
 

@@ -196,9 +196,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_property'])) {
 
     $property_type = sanitize_text_field($_POST['property_type'] ?? '');
     if ($property_type) {
-        $set_terms = wp_set_post_terms($post_id, array($property_type), 'property_type');
-        if (is_wp_error($set_terms)) {
-            error_log('Property type term error: ' . $set_terms->get_error_message());
+        $term = get_term_by('slug', $property_type, 'property_type');
+        if ($term) {
+            $set_terms = wp_set_post_terms($post_id, array($term->term_id), 'property_type');
+            if (is_wp_error($set_terms)) {
+                error_log('Property type term error: ' . $set_terms->get_error_message());
+            }
+        } else {
+            error_log('Property type term not found: ' . $property_type);
         }
     }
 
@@ -222,18 +227,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_property'])) {
     // Save amenities groups
     $amenities_data = array();
     if (isset($_POST['amenities_groups']) && is_array($_POST['amenities_groups'])) {
-        foreach ($_POST['amenities_groups'] as $group_data) {
+        require_once(ABSPATH . 'wp-admin/includes/image.php');
+        require_once(ABSPATH . 'wp-admin/includes/file.php');
+        require_once(ABSPATH . 'wp-admin/includes/media.php');
+
+        foreach ($_POST['amenities_groups'] as $g => $group_data) {
             $group = array(
                 'title' => sanitize_text_field($group_data['title'] ?? ''),
                 'amenities' => array(),
             );
 
             if (isset($group_data['amenities']) && is_array($group_data['amenities'])) {
-                foreach ($group_data['amenities'] as $amenity) {
+                foreach ($group_data['amenities'] as $a => $amenity) {
                     if (!empty($amenity['title'])) {
+                        $icon = esc_url_raw($amenity['icon'] ?? '');
+
+                        // Handle icon file upload if present
+                        if (isset($_FILES['amenities_groups']['name'][$g]['amenities'][$a]['icon_file']) &&
+                            $_FILES['amenities_groups']['error'][$g]['amenities'][$a]['icon_file'] === 0) {
+                            $_FILES['temp_icon'] = array(
+                                'name' => $_FILES['amenities_groups']['name'][$g]['amenities'][$a]['icon_file'],
+                                'type' => $_FILES['amenities_groups']['type'][$g]['amenities'][$a]['icon_file'],
+                                'tmp_name' => $_FILES['amenities_groups']['tmp_name'][$g]['amenities'][$a]['icon_file'],
+                                'error' => $_FILES['amenities_groups']['error'][$g]['amenities'][$a]['icon_file'],
+                                'size' => $_FILES['amenities_groups']['size'][$g]['amenities'][$a]['icon_file']
+                            );
+                            $attachment_id = media_handle_upload('temp_icon', $post_id);
+                            if (!is_wp_error($attachment_id)) {
+                                $icon = wp_get_attachment_url($attachment_id);
+                            } else {
+                                error_log('Amenity icon upload error: ' . $attachment_id->get_error_message());
+                            }
+                        }
+
                         $group['amenities'][] = array(
                             'title' => sanitize_text_field($amenity['title']),
-                            'icon' => esc_url_raw($amenity['icon'] ?? ''),
+                            'icon' => $icon,
                         );
                     }
                 }
@@ -358,14 +387,10 @@ get_header();
                 <!-- Property Type Selection Card -->
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h4 class="text-lg font-semibold font-inter mb-6">Select Property Type</h4>
-                    <div x-data="{
-                        activeTab: '<?php echo esc_js($active_tab_slug); ?>',
-                        selectedPropertyType: '<?php echo esc_js($property_data['property_type']); ?>'
-                    }">
+                    <div x-data="{ activeTab: '<?php echo esc_js($active_tab_slug); ?>' }">
                         <div class="flex gap-2 border-b border-slate-200 mb-6">
                             <?php foreach ($property_type_tabs as $tab) : ?>
-                            <button type="button"
-                                @click="activeTab = '<?php echo esc_js($tab['parent']->slug); ?>'; selectedPropertyType = '';"
+                            <button type="button" @click="activeTab = '<?php echo esc_js($tab['parent']->slug); ?>'"
                                 :class="activeTab === '<?php echo esc_js($tab['parent']->slug); ?>' ? 'border-[var(--primary-color)] text-[var(--primary-color)]' : 'border-transparent text-slate-600'"
                                 class="px-4 py-2 font-semibold border-b-2 transition">
                                 <?php echo esc_html($tab['parent']->name); ?>
@@ -473,6 +498,9 @@ get_header();
                                 class="absolute top-full left-0 right-0 bg-white border border-slate-300 rounded-lg shadow-lg mt-1 hidden max-h-48 overflow-y-auto z-50">
                                 <!-- Autocomplete suggestions -->
                             </div>
+                            <p class="text-xs mt-1 text-slate-500 p-2">
+                                Start typing your location in detail to see address suggestions powered by Google Places API.
+                            </p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -611,6 +639,13 @@ get_header();
 
                                     removeAmenity(index) {
                                         this.groups[this.activeTab].amenities.splice(index, 1);
+                                    },
+
+                                    uploadIcon(gIndex, aIndex, event) {
+                                        const file = event.target.files[0];
+                                        if (file) {
+                                            this.groups[gIndex].amenities[aIndex].icon = URL.createObjectURL(file);
+                                        }
                                     }
                                 }" x-show="openModal" x-transition
                                 class="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
@@ -671,12 +706,16 @@ get_header();
                                                                 class="flex items-center gap-3 p-4 border rounded-lg bg-white">
 
                                                                 <div
-                                                                    class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center">
+                                                                    class="w-10 h-10 bg-slate-100 rounded flex items-center justify-center relative">
                                                                     <template x-if="amenity.icon">
                                                                         <img :src="amenity.icon"
                                                                             class="w-8 h-8 object-contain">
                                                                     </template>
                                                                     <template x-if="!amenity.icon">📎</template>
+                                                                    <input type="file" accept="image/*"
+                                                                        class="absolute inset-0 opacity-0 cursor-pointer"
+                                                                        :name="`amenities_groups[${activeTab}][amenities][${aIndex}][icon_file]`"
+                                                                        @change="uploadIcon(activeTab, aIndex, $event)">
                                                                 </div>
 
                                                                 <input type="text" x-model="amenity.title"
@@ -746,9 +785,11 @@ get_header();
                                 VIDEO
                             </div>
                             <?php endif; ?>
-                            <input type="file" name="property_gallery_files[]" accept="image/*,video/*" class="gallery-file hidden">
+                            <input type="file" name="property_gallery_files[]" accept="image/*,video/*"
+                                class="gallery-file hidden">
                             <select name="property_gallery_types[]" class="gallery-type hidden">
-                                <option value="<?php echo esc_attr($item['type']); ?>" selected><?php echo esc_html(ucfirst($item['type'])); ?></option>
+                                <option value="<?php echo esc_attr($item['type']); ?>" selected>
+                                    <?php echo esc_html(ucfirst($item['type'])); ?></option>
                             </select>
                             <div class="mt-2 flex gap-2">
                                 <button type="button"
@@ -841,8 +882,8 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
         selectedCity: initialData.city || '',
         map: null,
         marker: null,
-        autocompleteListener: null, // Store the listener reference
-        showAmenitiesModal: false, // Control for amenities modal
+        autocompleteListener: null,
+        showAmenitiesModal: false,
         amenitiesGroups: <?php echo json_encode($property_data['amenities_data'] ?? [['title' => 'Main Features', 'amenities' => []]]); ?>,
         activeAmenitiesTab: 0,
 
@@ -872,7 +913,8 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
                 const coords = this.citiesData[this.selectedCity];
                 this.propertyData.latitude = coords.lat;
                 this.propertyData.longitude = coords.lng;
-                this.initializeMap(coords.lat, coords.lng); // Initialize or update map
+                this.initializeMap(coords.lat, coords.lng);
+                this.setCoordinates(coords.lat, coords.lng, 'City Update');
             }
         },
 
@@ -897,10 +939,8 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
 
             if (window.google && window.google.maps) {
                 if (this.map === null) {
-                    // Ensure map container has dimensions
                     mapElement.style.width = '100%';
                     mapElement.style.height = '400px';
-
                     this.map = new google.maps.Map(mapElement, {
                         zoom: 14,
                         center: {
@@ -908,14 +948,14 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
                             lng
                         },
                         mapTypeControl: true,
-                        zoomControl: true
+                        zoomControl: true,
+                        mapId: 'c484b19c4f8c16ebb3dcf3d1'
                     });
 
                     this.map.addListener('click', (e) => {
                         this.setCoordinates(e.latLng.lat(), e.latLng.lng(), 'Map Click');
                     });
                 } else {
-                    // Update existing map center and zoom
                     this.map.setCenter({
                         lat,
                         lng
@@ -931,40 +971,47 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
         setCoordinates(lat, lng, source = '') {
             console.log('[v0] Setting coordinates:', lat, lng, source);
 
-            if (this.marker) {
-                this.marker.map = null;
-                this.marker = null;
-            }
-
-            const pinElement = document.createElement('div');
-            pinElement.innerHTML = `
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="16" cy="16" r="14" fill="#3B82F6" stroke="white" stroke-width="2"/>
-                    <circle cx="16" cy="16" r="4" fill="white"/>
-                </svg>
-            `;
-            pinElement.style.cursor = 'grab';
-
-            this.marker = new google.maps.marker.AdvancedMarkerElement({
-                position: {
-                    lat,
-                    lng
-                },
-                map: this.map,
-                title: 'Property Location',
-                content: pinElement,
-                draggable: true // Make marker draggable
-            });
-
-            this.marker.addEventListener('dragend', () => {
-                const pos = this.marker.position;
-                this.propertyData.latitude = pos.lat;
-                this.propertyData.longitude = pos.lng;
-                console.log('[v0] Marker dragged to:', pos.lat, pos.lng);
-            });
-
             this.propertyData.latitude = lat;
             this.propertyData.longitude = lng;
+
+            if (this.marker) {
+                this.marker.setPosition({
+                    lat,
+                    lng
+                });
+            } else {
+                const icon = {
+                    url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 60 60">
+                        <g>
+                            <path fill="#95a5a5" d="M33 32.72v21.39a3.016 3.016 0 0 1-.43 1.55l-1.71 2.85a1 1 0 0 1-1.72 0l-1.71-2.85a3.016 3.016 0 0 1-.43-1.55V32.72z" opacity="1" data-original="#95a5a5"></path>
+                            <path fill="#c03a2b" d="M46 17a15.98 15.98 0 1 1-6.44-12.84A16 16 0 0 1 46 17z" opacity="1" data-original="#c03a2b" class=""></path>
+                            <path fill="#e64c3c" d="M40 8a17 17 0 0 1-17 17 16.853 16.853 0 0 1-7.79-1.89A16.009 16.009 0 0 1 39.56 4.16 16.744 16.744 0 0 1 40 8z" opacity="1" data-original="#e64c3c" class=""></path>
+                        </g>
+                    </svg>
+                    `),
+                    scaledSize: new google.maps.Size(32, 32),
+                    anchor: new google.maps.Point(16, 16)
+                };
+
+                this.marker = new google.maps.Marker({
+                    position: {
+                        lat,
+                        lng
+                    },
+                    map: this.map,
+                    title: 'Property Location',
+                    icon: icon,
+                    draggable: true
+                });
+
+                this.marker.addListener('dragend', () => {
+                    const pos = this.marker.getPosition();
+                    this.propertyData.latitude = pos.lat();
+                    this.propertyData.longitude = pos.lng();
+                    console.log('[v0] Marker dragged to:', pos.lat(), pos.lng());
+                });
+            }
 
             // Pan map to marker
             if (this.map) {
@@ -975,7 +1022,7 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
             }
         },
 
-        initializeAutocomplete() {
+initializeAutocomplete() {
             const input = document.getElementById('address-input');
             if (!input || !this.selectedCity) return;
 
@@ -1013,59 +1060,12 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
                                         div.textContent = place.formatted_address;
 
                                         div.addEventListener('click', () => {
-                                            if (this.marker) {
-                                                this.marker.map = null;
-                                                this.marker = null;
-                                            }
-
-                                            this.propertyData.address = place
-                                                .formatted_address;
+                                            this.propertyData.address = place.formatted_address;
                                             const lat = place.geometry.location.lat();
                                             const lng = place.geometry.location.lng();
 
-                                            // Create new marker with new API
-                                            const pinElement = document.createElement(
-                                                'div');
-                                            pinElement.innerHTML = `
-                                                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <circle cx="16" cy="16" r="14" fill="#3B82F6" stroke="white" stroke-width="2"/>
-                                                    <circle cx="16" cy="16" r="4" fill="white"/>
-                                                </svg>
-                                            `;
-                                            pinElement.style.cursor = 'grab';
+                                            this.setCoordinates(lat, lng, 'Autocomplete');
 
-                                            this.marker = new google.maps.marker
-                                                .AdvancedMarkerElement({
-                                                    position: {
-                                                        lat,
-                                                        lng
-                                                    },
-                                                    map: this.map,
-                                                    title: 'Property Location',
-                                                    content: pinElement,
-                                                    draggable: true
-                                                });
-
-                                            // Setup drag listener
-                                            this.marker.addEventListener('dragend',
-                                                () => {
-                                                    const pos = this.marker
-                                                        .position;
-                                                    this.propertyData.latitude = pos
-                                                        .lat;
-                                                    this.propertyData.longitude =
-                                                        pos.lng;
-                                                    console.log(
-                                                        '[v0] Marker dragged to:',
-                                                        pos.lat, pos.lng);
-                                                });
-
-                                            this.propertyData.latitude = lat;
-                                            this.propertyData.longitude = lng;
-                                            this.map.panTo({
-                                                lat,
-                                                lng
-                                            });
                                             this.map.setZoom(16);
 
                                             dropdown.classList.add('hidden');
@@ -1092,21 +1092,22 @@ function propertyForm(initialData, typeSpecificFieldsData, citiesData) {
             this.updatePropertyTypeFields();
             if (this.selectedCity) {
                 this.updateCityLocation();
-                // Ensure map is initialized if city is pre-selected
                 if (!this.map) {
                     this.initializeMap(this.citiesData[this.selectedCity].lat, this.citiesData[this.selectedCity].lng);
                 }
+            } else if (this.propertyData.latitude && this.propertyData.longitude) {
+                const lat = parseFloat(this.propertyData.latitude);
+                const lng = parseFloat(this.propertyData.longitude);
+                this.initializeMap(lat, lng);
+                this.setCoordinates(lat, lng, 'Init');
             }
         }
     }
 }
 </script>
-
 <!-- Direct upload handlers with Alpine (no wp.media) -->
 <script>
-// Amenities upload handler
 document.addEventListener('DOMContentLoaded', function() {
-    // Featured image upload
     const uploadBtn = document.getElementById('upload-featured-image');
     const fileInput = document.getElementById('featured-image-input');
 
@@ -1133,7 +1134,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Gallery upload
     const addGalleryBtn = document.getElementById('add-gallery-btn');
     const galleryList = document.getElementById('gallery-list');
 
@@ -1182,7 +1182,8 @@ document.addEventListener('DOMContentLoaded', function() {
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 const file = this.files[0];
-                const type = file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : '');
+                const type = file.type.startsWith('image/') ? 'image' : (file.type.startsWith(
+                    'video/') ? 'video' : '');
                 if (!type) {
                     alert('Invalid file type. Only images and videos allowed.');
                     this.value = '';
@@ -1194,9 +1195,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const objectURL = URL.createObjectURL(file);
 
                 if (type === 'image') {
-                    preview.innerHTML = `<img src="${objectURL}" alt="Gallery" class="w-full h-48 object-cover rounded">`;
+                    preview.innerHTML =
+                        `<img src="${objectURL}" alt="Gallery" class="w-full h-48 object-cover rounded">`;
                 } else {
-                    // For videos, display a placeholder with a play icon
                     preview.innerHTML = `
                         <div class="w-full h-48 bg-black rounded flex items-center justify-center relative">
                             <video class="w-full h-full object-cover" src="${objectURL}"></video>
@@ -1209,7 +1210,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                 }
             }
-        }, { once: true }); // Listener only once per upload
+        }, {
+            once: true
+        });
     }
 
     function removeGallery(e) {
@@ -1217,13 +1220,13 @@ document.addEventListener('DOMContentLoaded', function() {
         e.target.closest('.gallery-row').remove();
     }
 
-    attachGalleryListeners(); // Initial setup of listeners
+    attachGalleryListeners();
 });
 </script>
 
 <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUPkXXwkGt0xC5ongE7-62nzz6l7D3Nf4&libraries=places,marker&v=beta"
-    async defer>
+    async>
 </script>
 
 <?php get_footer(); ?>

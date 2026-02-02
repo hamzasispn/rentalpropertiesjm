@@ -1,11 +1,9 @@
 <?php
 /**
  * Archive template for properties with advanced filtering
- * UPDATED: Top bar filters, single range sliders, Google autocomplete locations, infinite scroll
  */
 get_header();
 
-// Call the function to get Jamaica cities dynamically
 $cities_data = get_jamaica_cities();
 
 $filter_params = array(
@@ -34,15 +32,29 @@ $parent_types = get_terms(array(
 ));
 
 $property_type_hierarchy = [];
+
 foreach ($parent_types as $parent) {
-    $children = get_terms(array(
+    $children = get_terms([
         'taxonomy' => 'property_type',
         'hide_empty' => false,
         'parent' => $parent->term_id,
-    ));
+    ]);
+
+    $children_with_icons = array_map(function ($child) {
+        return [
+            'term_id' => $child->term_id,
+            'name' => $child->name,
+            'slug' => $child->slug,
+            'icon' => get_field('icons', 'property_type_' . $child->term_id),
+        ];
+    }, $children);
+
     $property_type_hierarchy[] = [
-        'parent' => $parent,
-        'children' => $children,
+        'parent' => [
+            'term_id' => $parent->term_id,
+            'name' => $parent->name,
+        ],
+        'children' => $children_with_icons,
     ];
 }
 
@@ -75,9 +87,10 @@ $bathrooms = sort_terms_numerically($bathrooms);
 <!-- Header -->
 <div
     style="background: url('<?php echo get_template_directory_uri(); ?>/assets/archive-image.jpg') top/cover no-repeat;">
-    <div class="flex pt-[16.229vw] items-start flex-col h-[28.281vw] max-w-[90%] mx-auto">
-        <h1 class="text-4xl md:text-[4.063vw] font-bold text-white mb-2">Find Homes and Spaces</h1>
-        <p class="text-white font-bold text-[2.917vw]">That Match Your Needs</p>
+    <div
+        class="flex pb-[7.229vw] md:pt-[16.229vw] items-start flex-col h-[40vh] justify-end md:h-[28.281vw] max-w-[90%] mx-auto">
+        <h1 class="text-[8.471vw] leading-[1] md:text-[4.063vw] font-bold text-white mb-2">Find Homes and Spaces</h1>
+        <p class="text-white font-bold text-[4.5vw] md:text-[2.917vw]">That Match Your Needs</p>
     </div>
 </div>
 
@@ -88,34 +101,38 @@ $bathrooms = sort_terms_numerically($bathrooms);
             x-data="propertyArchiveFiltering(<?php echo htmlspecialchars(json_encode($filter_params)); ?>, <?php echo htmlspecialchars(json_encode($cities_data)); ?>, <?php echo htmlspecialchars(json_encode($property_type_hierarchy)); ?>, <?php echo htmlspecialchars(json_encode($bedrooms)); ?>, <?php echo htmlspecialchars(json_encode($bathrooms)); ?>)">
 
             <!-- Top Filter Bar - Sticky -->
-            <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200 mb-6 sticky top-0 z-50">
-                <div class="flex items-center gap-3 flex-wrap">
+            <div
+                class="bg-white rounded-xl shadow-sm p-[1.765vw] md:p-4 border border-slate-200 mb-6 sticky top-0 z-50">
+                <div class="flex items-center justify-between md:justify-normal md:gap-3 flex-wrap">
                     <!-- Plus Button to Toggle Filters -->
                     <button type="button" @click="showFilters = !showFilters"
-                        class="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg transition-all shadow-sm hover:shadow-md">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        class="flex items-center gap-2 md:px-4 md:py-2.5 px-[4.235vw] py-[2.353vw] bg-gradient-to-r from-[var(--primary-color)] to-blue-700 hover:from-blue-700 hover:to-[var(--primary-color)] text-white font-semibold rounded-lg transition-all shadow-sm hover:shadow-md">
+                        <svg class="md:w-5 md:h-5 w-[2.353vw] h-[2.353vw]" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
                             </path>
                         </svg>
-                        <span x-text="showFilters ? 'Hide Filters' : 'Show Filters'"></span>
+                        <span x-text="showFilters ? 'Hide Filters' : 'Show Filters'"
+                            class="text-[3vw] md:text-[0.938vw]"></span>
                     </button>
 
                     <!-- Quick Stats -->
-                    <div class="text-slate-700 font-medium ml-auto hidden md:block">
-                        Found <span x-text="totalResults" class="text-blue-600 font-bold"></span> properties
+                    <div class="text-slate-700 font-medium ml-auto hidden md:block font-inter">
+                        Found <span x-text="totalResults" class="text-[var(--primary-color)] font-bold"></span>
+                        properties
                     </div>
 
                     <!-- View Toggle -->
-                    <div class="flex gap-2 border-l pl-4">
+                    <div class="flex gap-2 border-l pl-4 hidden md:block">
                         <button type="button" @click="viewType = 'grid'"
-                            :class="viewType === 'grid' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                            :class="viewType === 'grid' ? 'bg-[var(--primary-color)] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
                             class="p-2.5 rounded-lg transition-all" title="Grid view">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M3 3h7v7H3zm11 0h7v7h-7zm-11 11h7v7H3zm11 0h7v7h-7z"></path>
                             </svg>
                         </button>
                         <button type="button" @click="viewType = 'list'"
-                            :class="viewType === 'list' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                            :class="viewType === 'list' ? 'bg-[var(--primary-color)] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
                             class="p-2.5 rounded-lg transition-all" title="List view">
                             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M3 4h18v2H3V4zm0 7h18v2H3v-2zm0 7h18v2H3v-2z"></path>
@@ -125,7 +142,7 @@ $bathrooms = sort_terms_numerically($bathrooms);
 
                     <!-- Sort Dropdown -->
                     <select x-model="sortBy" @change="applyFilters()"
-                        class="px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 text-sm font-medium bg-white">
+                        class="md:px-4 md:py-2.5 px-[4.235vw] py-[2.353vw] border border-slate-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent text-slate-900 text-[2.824vw] md:text-sm font-medium bg-white">
                         <option value="newest">Newest First</option>
                         <option value="featured">Featured First</option>
                         <option value="price-low">Price: Low to High</option>
@@ -139,10 +156,10 @@ $bathrooms = sort_terms_numerically($bathrooms);
                         <!-- City Filter with TomSelect Dropdown -->
                         <div>
                             <label
-                                class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">City</label>
+                                class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2 font-inter">City</label>
                             <select id="city-select" x-model="filters.city"
                                 @change="resetLocationSuggestions(); applyFilters()"
-                                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition">
                                 <option value="">Select a city...</option>
                                 <template x-for="city in citiesList" :key="city">
                                     <option :value="city" x-text="city"></option>
@@ -153,12 +170,12 @@ $bathrooms = sort_terms_numerically($bathrooms);
                         <!-- Location Filter with Google API Autocomplete (appears after city selection) -->
                         <div class="relative" x-show="filters.city">
                             <label
-                                class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">Location</label>
+                                class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2 font-inter">Location</label>
                             <input type="text" x-model="filters.location" @input="searchLocations($event)"
                                 @focus="showLocationSuggestions = true"
                                 @blur="setTimeout(() => showLocationSuggestions = false, 200)"
                                 placeholder="Search location..."
-                                class="w-full px-4 py-2.5 border border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                class="w-full px-4 py-2.5 border font-inter border-slate-300 rounded-lg text-sm text-slate-900 placeholder-slate-500 focus:ring-2 focus:ring-[var(--primary-color)] focus:border-transparent transition">
 
                             <!-- Location Suggestions from Google API -->
                             <div x-show="showLocationSuggestions && locationSuggestions.length"
@@ -166,7 +183,7 @@ $bathrooms = sort_terms_numerically($bathrooms);
                                 <template x-for="location in locationSuggestions" :key="location">
                                     <button type="button"
                                         @click="filters.location = location; showLocationSuggestions = false; applyFilters()"
-                                        class="w-full text-left px-4 py-2.5 hover:bg-blue-50 text-slate-900 text-sm transition"
+                                        class="w-full text-left px-4 py-2.5 hover:bg-blue-50 text-slate-900 text-sm transition font-inter"
                                         x-text="location"></button>
                                 </template>
                             </div>
@@ -178,28 +195,30 @@ $bathrooms = sort_terms_numerically($bathrooms);
                                 class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">Property
                                 Type</label>
                             <div x-data="{
-                                propertyTypeTab: propertyTypeHierarchy.length > 0 ? propertyTypeHierarchy[0].parent.slug : '',
+                                propertyTypeTab: propertyTypeHierarchy.length > 0 ? propertyTypeHierarchy[0].parent.term_id : '',
                             }" class="bg-slate-50 rounded-lg p-4 border border-slate-200">
                                 <!-- Tab Headers -->
                                 <div class="flex gap-2 border-b border-slate-300 mb-4 flex-wrap">
-                                    <template x-for="group in propertyTypeHierarchy" :key="group.parent.slug">
-                                        <button type="button" @click="propertyTypeTab = group.parent.slug"
-                                            :class="propertyTypeTab === group.parent.slug ? 'border-blue-600 text-blue-600 bg-white' : 'border-transparent text-slate-600 hover:text-slate-900'"
-                                            class="px-4 py-2.5 font-semibold text-sm border-b-2 transition rounded-t">
+                                    <template x-for="group in propertyTypeHierarchy" :key="group.parent.term_id">
+                                        <button type="button" @click="propertyTypeTab = group.parent.term_id"
+                                            :class="propertyTypeTab === group.parent.term_id ? 'border-[var(--primary-color)] text-[var(--primary-color)] bg-white' : 'border-transparent text-slate-600 hover:text-slate-900'"
+                                            class="px-4 py-2.5 font-semibold text-sm border-b-2 transition rounded-t font-inter">
                                             <span x-text="group.parent.name"></span>
                                         </button>
                                     </template>
                                 </div>
 
                                 <!-- Tab Content - Child Filters -->
-                                <template x-for="group in propertyTypeHierarchy" :key="group.parent.slug">
-                                    <div x-show="propertyTypeTab === group.parent.slug" x-transition
+                                <template x-for="group in propertyTypeHierarchy" :key="group.parent.term_id">
+                                    <div x-show="propertyTypeTab === group.parent.term_id" x-transition
                                         class="flex flex-wrap gap-2">
                                         <template x-for="child in group.children" :key="child.slug">
                                             <button type="button"
                                                 @click="filters.types.includes(child.slug) ? filters.types.splice(filters.types.indexOf(child.slug), 1) : filters.types.push(child.slug); applyFilters();"
-                                                :class="filters.types.includes(child.slug) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
-                                                class="px-4 py-2 rounded-full border text-sm font-medium transition">
+                                                :class="filters.types.includes(child.slug) ? 'bg-[var(--primary-color)] text-white border-[var(--primary-color)]' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'"
+                                                class="px-4 py-2 rounded-full border text-sm font-medium transition font-inter flex items-center gap-2">
+                                                <span x-html="child.icon"
+                                                    class="w-5 h-5 fill-[var(--primary-color)] block"></span>
                                                 <span x-text="child.name"></span>
                                             </button>
                                         </template>
@@ -208,7 +227,8 @@ $bathrooms = sort_terms_numerically($bathrooms);
                             </div>
                         </div>
 
-                        <div class="grid-cols-2 grid md:grid-cols-5 gap-8 lg:col-span-5 md:col-span-2 col-span-1 px-2 py-2">
+                        <div
+                            class="grid-cols-2 grid md:grid-cols-5 gap-8 lg:col-span-5 md:col-span-2 col-span-1 px-2 py-2">
                             <!-- Bedrooms Single Slider (nouislider) -->
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
